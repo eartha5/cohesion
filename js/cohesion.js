@@ -8,7 +8,7 @@ var Cohesion = (function () {
 	    var overlapThreshold = 200;
 	    var lightColorStop = 'rgba(255,100,0,1)';
 	    var darkColorStop = 'rgba(255,100,0,0)';
-	    var timeOut = 40;
+	    var timeOut = 10;
 
 		var animationCanvas = document.getElementById('backgroundAnimation');
 		var animationContext = animationCanvas.getContext('2d');
