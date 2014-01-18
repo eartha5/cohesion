@@ -1,29 +1,45 @@
 var Cohesion = (function () {
 	
 	var animationStartTimer;
+	var animationCanvas;
+	var animationContext;
+	var preDrawCanvas;
+	var preDrawContext;
 
-	function setupCanvas() {
+	function setup() {
+
+		var w = window.innerWidth;
+		var h = window.innerHeight;
 
 		// color/size behavior properties
-	    var overlapThreshold = 245;
+	    var overlapThreshold = 237;
 	    var lightColorStop = 'rgba(255,255,255,1)';
-	    var darkColorStop = 'rgba(240,240,240,0)';
+	    var darkColorStop = 'rgba(220,220,220,0)';
 	    var backgroundColor = 'rgb(0,0,0)';
-	    var sizeBase = 200;
-	    var sizeMultiplier = 50;
+	    var sizeBase = 100;
+	    var sizeMultiplier = 40;
 
 	    // motion behavior properties
-	    var timeOut = 10;
+	    var frameRate = 12;
 
-		var animationCanvas = document.getElementById('backgroundAnimation');
-		var animationContext = animationCanvas.getContext('2d');
+	    // destroy old canvas if it's there
+	    var staleCanvas = document.getElementById('backgroundAnimation');
+	    if (staleCanvas) {
+		    staleCanvas.parentNode.removeChild(staleCanvas);
+		}
+
+		animationCanvas = document.createElement('canvas');
+		animationCanvas.id = "backgroundAnimation";
+	    animationCanvas.width = w;
+	    animationCanvas.height = h;
+		animationContext = animationCanvas.getContext('2d');
 
 		console.log("canvas dimensions = "+animationCanvas.width+"x"+animationCanvas.height);
 
-	    var tempAnimCanvas = document.createElement("canvas");
-	    var tempAnimContext = tempAnimCanvas.getContext("2d");
-	    tempAnimCanvas.width = animationCanvas.width = 2400;
-	    tempAnimCanvas.height = animationCanvas.height = 1200;
+	    preDrawCanvas = document.createElement("canvas");
+	    preDrawCanvas.width = w;
+	    preDrawCanvas.height = h;
+	    preDrawContext = preDrawCanvas.getContext("2d");
 
 	    // initialize points array
 	    points = [];
@@ -41,12 +57,12 @@ var Cohesion = (function () {
 
 		function update(){
 		    var len = points.length;
-		    tempAnimContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
+		    preDrawContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
 		    // draw a background first
-		    tempAnimContext.beginPath();
-		    tempAnimContext.fillStyle = backgroundColor;
-		    tempAnimContext.rect( 0, 0, animationCanvas.width, animationCanvas.height );
-		    tempAnimContext.fill();
+		    preDrawContext.beginPath();
+		    preDrawContext.fillStyle = backgroundColor;
+		    preDrawContext.rect( 0, 0, animationCanvas.width, animationCanvas.height );
+		    preDrawContext.fill();
 
 		    while( len-- ){
 		        var point = points[ len ];
@@ -66,40 +82,39 @@ var Cohesion = (function () {
 		            point.y = animationCanvas.height + point.size;
 		       }
 		        
-		        tempAnimContext.beginPath();
-		        var pointGradient = tempAnimContext.createRadialGradient( point.x, point.y, 1, point.x, point.y, point.size );
+		        preDrawContext.beginPath();
+		        var pointGradient = preDrawContext.createRadialGradient( point.x, point.y, 1, point.x, point.y, point.size );
 		        pointGradient.addColorStop( 0, lightColorStop );
 		        pointGradient.addColorStop( 1, darkColorStop );
-		        tempAnimContext.fillStyle = pointGradient;
-		        tempAnimContext.arc( point.x, point.y, point.size, 0, Math.PI*2 );
-		        tempAnimContext.fill();
+		        preDrawContext.fillStyle = pointGradient;
+		        preDrawContext.arc( point.x, point.y, point.size, 0, Math.PI*2 );
+		        preDrawContext.fill();
 		    }
-		    renderAgainstThreshold();
-		    setTimeout( update, timeOut );
+		    renderFiltered();
+		    setTimeout( update, ( 1000 / frameRate ) );
 		}
 
-		function renderAgainstThreshold(){
-		    var imageData = tempAnimContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height ),
-		        pixels = imageData.data;
+		function renderFiltered(){
+		    var imageData = preDrawContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
+
+		    // Filters.rgbThreshold accepts 'threshold' parameter  0-255
+		    // filterImage(filter, image data[, filter params...])
+//		    var filteredData = Filters.filterImage(Filters.rgbThreshold, imageData, overlapThreshold);
+
+		 //    filteredData = Filters.filterImage(Filters.convolute, filteredData,
+			//   [  0, -1,  0,
+			//     -1,  5, -1,
+			//      0, -1,  0 ]
+			// );
+
+			var filteredData = Filters.filterImage(Filters.singleChannelThreshold, imageData, overlapThreshold);
 		    
-		    var pixelVal;
-		    for ( var i = 0, n = pixels.length; i < n; i += 4 ) {
-		    	pixelVal = pixels[i];
-		        if( pixelVal < overlapThreshold ) {
-		            pixelVal = 0;
-		            if( pixelVal >= overlapThreshold ) {
-		                pixelVal = 0;
-		            }
-		        }
-		        pixels[i] = pixelVal;
-		        pixels[i+1] = pixelVal;
-		        pixels[i+2] = pixelVal;
+//		    animationContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
+		    animationContext.putImageData(filteredData, 0, 0);
 
-		    }
-		    animationContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
-		    animationContext.putImageData(imageData, 0, 0);    
 		}
 
+		document.getElementById('cohesion').appendChild(animationCanvas);
 		update(); 
 
 	}
@@ -111,10 +126,8 @@ var Cohesion = (function () {
 		if (animationStartTimer)
 			clearTimeout(animationStartTimer);
 		animationStartTimer = setTimeout(function() {
-			setupCanvas();
+			setup();
 		}, 100);
-
-		console.log("animation started");
 	}
 
 	return {

@@ -22,7 +22,7 @@ jquery
 modernizr (is just here for kicks really)
 
 
-I'm using LiveReload server to preprocess LESS, LiveReload chrome extension to reserve code changes
+I'm using LiveReload server to preprocess LESS, LiveReload chrome extension to auto-reload code changes
 
 
 
