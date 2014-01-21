@@ -38,6 +38,18 @@ var Filters = (function() {
 		        imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = pixelVal;
 		    }
 		    return imageData;
+		  //   var pixelVal;
+		  //   for ( var i = 0, n = imageData.data.length; i < n; i += 4 ) {
+		  //   	pixelVal = imageData.data[i];
+		  //   	var meetsThresholdRange = false;
+		  //   	for (k = i - 10; k < i + 10; k++) {
+			 //        if( imageData.data[k] < threshold ) {
+			 //            pixelVal = 0;
+			 //        }
+				// }
+		  //       imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = pixelVal;
+		  //   }
+		  //   return imageData;		    
 		},
 
 		// modified from html5rocks article above

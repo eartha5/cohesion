@@ -12,15 +12,16 @@ var Cohesion = (function () {
 		var h = window.innerHeight;
 
 		// color/size behavior properties
+		var blobCount = 20;
 	    var overlapThreshold = 237;
 	    var lightColorStop = 'rgba(255,255,255,1)';
 	    var darkColorStop = 'rgba(220,220,220,0)';
 	    var backgroundColor = 'rgb(0,0,0)';
 	    var sizeBase = 100;
-	    var sizeMultiplier = 40;
+	    var sizeMultiplier = 200;
 
 	    // motion behavior properties
-	    var frameRate = 12;
+	    var frameRate = 30;
 
 	    // destroy old canvas if it's there
 	    var staleCanvas = document.getElementById('backgroundAnimation');
@@ -44,7 +45,7 @@ var Cohesion = (function () {
 	    // initialize points array
 	    points = [];
 
-		for(var i = 0; i < 50; i++){
+		for(var i = 0; i < blobCount; i++){
 		    var x = Math.random() * animationCanvas.width,
 		        y = Math.random() * animationCanvas.height,
 		        vx = ( Math.random() * 4 ) - 2,
@@ -101,13 +102,21 @@ var Cohesion = (function () {
 		    // filterImage(filter, image data[, filter params...])
 //		    var filteredData = Filters.filterImage(Filters.rgbThreshold, imageData, overlapThreshold);
 
-		 //    filteredData = Filters.filterImage(Filters.convolute, filteredData,
+
+			var filteredData = Filters.filterImage(Filters.singleChannelThreshold, imageData, overlapThreshold);
+
+		 // 	filteredData = Filters.filterImage(Filters.convolute, filteredData,
 			//   [  0, -1,  0,
 			//     -1,  5, -1,
 			//      0, -1,  0 ]
 			// );
-
-			var filteredData = Filters.filterImage(Filters.singleChannelThreshold, imageData, overlapThreshold);
+		 	// filteredData = Filters.filterImage(Filters.convolute, filteredData,
+			 //  [  1/36, 1/36, 1/36, 1/36, 1/36, 1/36,
+			 //  	1/36, 1/36, 1/36, 1/36, 1/36, 1/36,
+			 //  	1/36, 1/36, 1/36, 1/36, 1/36, 1/36,
+			 //  	1/36, 1/36, 1/36, 1/36, 1/36, 1/36,
+			 //  	1/36, 1/36, 1/36, 1/36, 1/36, 1/36,
+			 //  	1/36, 1/36, 1/36, 1/36, 1/36, 1/36 ]	);
 		    
 //		    animationContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
 		    animationContext.putImageData(filteredData, 0, 0);
