@@ -18,3 +18,7 @@ NOTES:
 1-8-13
 Found a neat way to simulate cohesion without processing every pixel as a fluid molecule, by using gradients and rendering overlapping pixels at a threshold:
 http://www.somethinghitme.com/2012/06/06/2d-metaballs-with-canvas/
+
+
+1-21-14
+Need to refactor dramatically, modularize and decrease complexity of functions
