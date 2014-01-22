@@ -13,12 +13,13 @@ var Cohesion = (function () {
 
 		// color/size behavior properties
 		var blobCount = 20;
-	    var overlapThreshold = 237;
-	    var lightColorStop = 'rgba(255,255,255,1)';
-	    var darkColorStop = 'rgba(220,220,220,0)';
+	    var overlapThreshold = 120;
+	    var lightColorStop = 'rgba(255,0,0,1)';
+	    var darkColorStop = 'rgba(100,100,100,0)';
 	    var backgroundColor = 'rgb(0,0,0)';
 	    var sizeBase = 100;
-	    var sizeMultiplier = 200;
+	    var sizeMultiplier = 80;
+	    var speedMultiplier = .2;
 
 	    // motion behavior properties
 	    var frameRate = 30;
@@ -46,10 +47,10 @@ var Cohesion = (function () {
 	    points = [];
 
 		for(var i = 0; i < blobCount; i++){
-		    var x = Math.random() * animationCanvas.width,
+		    var x = animationCanvas.width / blobCount * i,
 		        y = Math.random() * animationCanvas.height,
-		        vx = ( Math.random() * 4 ) - 2,
-		        vy = ( Math.random() * 4 ) - 2 ,
+		        vx = 0,
+		        vy = speedMultiplier * ( ( Math.random() * 10 ) - 2 ) ,
 		        size = Math.floor( Math.random() * sizeMultiplier ) + sizeBase;
 		    
 		    points.push({ x:x, y:y, vx:vx, vy:vy, size:size });
@@ -91,6 +92,27 @@ var Cohesion = (function () {
 		        preDrawContext.arc( point.x, point.y, point.size, 0, Math.PI*2 );
 		        preDrawContext.fill();
 		    }
+
+		    // draw top and bottom gradients
+		    var topGrad = preDrawContext.createLinearGradient(animationCanvas.width / 2, 
+		    																0, 
+		    																animationCanvas.width / 2, 
+		    																animationCanvas.height / 10 );
+		    topGrad.addColorStop(.3, lightColorStop);
+		    topGrad.addColorStop(1, darkColorStop);
+		    preDrawContext.fillStyle = topGrad;
+		    preDrawContext.fillRect( 0, 0, animationCanvas.width, animationCanvas.height / 10 );
+
+		    var bottomGrad = preDrawContext.createLinearGradient(animationCanvas.width / 2, 
+		    																animationCanvas.height, 
+		    																animationCanvas.width / 2, 
+		    																animationCanvas.height - animationCanvas.height / 10 );
+		    bottomGrad.addColorStop(.3, lightColorStop);
+		    bottomGrad.addColorStop(1, darkColorStop);
+		    preDrawContext.fillStyle = bottomGrad;
+		    preDrawContext.fillRect( 0, animationCanvas.height - animationCanvas.height / 10, animationCanvas.width, animationCanvas.height );
+
+
 		    renderFiltered();
 		    setTimeout( update, ( 1000 / frameRate ) );
 		}

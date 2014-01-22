@@ -36,6 +36,12 @@ var Filters = (function() {
 		            pixelVal = 0;
 		        }
 		        imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = pixelVal;
+		        // if(imageData.data[i+3]<threshold){
+		        //    imageData.data[i+3]/=6;
+		        //     if(imageData.data[i+3]>threshold/4){
+		        //         imageData.data[i+3]=0;
+		        //     }
+		        // }
 		    }
 		    return imageData;
 		  //   var pixelVal;
