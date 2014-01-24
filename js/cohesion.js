@@ -14,18 +14,22 @@ var Cohesion = (function () {
 		var w = window.innerWidth;
 		var h = window.innerHeight;
 
-		// color/size behavior properties
+		// visual finish properties
 		var blobCount = 20;
+	    var lightDisplayRgb = [ 255, 255, 255 ];
+	    var darkDisplayRgb = [ 0, 0, 50 ];
+
+		// vars affecting shape and size of blobs/interaction
 	    var overlapThreshold = 120;
-	    var lightColorStop = 'rgba(255,0,0,1)';
-	    var darkColorStop = 'rgba(100,100,100,0)';
 	    var backgroundColor = 'rgb(0,0,0)';
+	    var lightColorStop = 'rgba(255,0,0,1)';
+	    var darkColorStop = 'rgba(100,0,0,0)';
 	    var sizeBase = 40;
 	    var sizeMultiplier = 120;
-	    var speedMultiplier = .2;
 
 	    // motion behavior properties
 	    var frameRate = 30;
+	    var speedMultiplier = .2;
 
 	    // destroy old canvas if it's there
 	    var staleCanvas = document.getElementById('backgroundAnimation');
@@ -65,12 +69,14 @@ var Cohesion = (function () {
 	    preDrawCanvas.width = w;
 	    preDrawCanvas.height = h;
 	    preDrawContext = preDrawCanvas.getContext("2d");
+	    
 	    // predraw the background
 	    preDrawContext.beginPath();
 	    preDrawContext.fillStyle = backgroundColor;
 	    preDrawContext.rect( 0, 0, animationCanvas.width, animationCanvas.height );
 	    preDrawContext.fill();
-	    // predraw the top and bottom gradients
+	    
+	    //predraw the top and bottom gradients
 	    var topGrad = preDrawContext.createLinearGradient(animationCanvas.width / 2, 
 	    																0, 
 	    																animationCanvas.width / 2, 
@@ -130,7 +136,7 @@ var Cohesion = (function () {
 		function renderFiltered(){
 		    var imageData = drawingContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
 
-			var filteredData = Filters.filterImage(Filters.singleChannelThreshold, imageData, overlapThreshold);
+			var filteredData = Filters.filterImage(Filters.twoColorThreshold, imageData, overlapThreshold, lightDisplayRgb, darkDisplayRgb);
 
 		    animationContext.putImageData(filteredData, 0, 0);
 
