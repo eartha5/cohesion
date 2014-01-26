@@ -19,6 +19,10 @@ var Cohesion = (function () {
 	    var lightDisplayRgb = [ 255, 255, 255 ];
 	    var darkDisplayRgb = [ 0, 0, 50 ];
 
+	    // motion behavior properties
+	    var frameRate = 100;
+	    var speedMultiplier = .2;
+
 		// vars affecting shape and size of blobs/interaction
 	    var overlapThreshold = 120;
 	    var backgroundColor = 'rgb(0,0,0)';
@@ -26,10 +30,6 @@ var Cohesion = (function () {
 	    var darkColorStop = 'rgba(100,0,0,0)';
 	    var sizeBase = 40;
 	    var sizeMultiplier = 120;
-
-	    // motion behavior properties
-	    var frameRate = 30;
-	    var speedMultiplier = .2;
 
 	    // destroy old canvas if it's there
 	    var staleCanvas = document.getElementById('backgroundAnimation');
@@ -97,6 +97,7 @@ var Cohesion = (function () {
 
 
 		function update(){
+			Performance.incrementMeasure();
 		    var len = points.length;
 		    drawingContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
 		    // draw background and top and bottom edges first
@@ -144,6 +145,7 @@ var Cohesion = (function () {
 
 		document.getElementById('cohesion').appendChild(animationCanvas);
 		clearTimeout(animationTimeout);
+		Performance.startMeasure();
 		update(); 
 
 	}
@@ -164,6 +166,9 @@ var Cohesion = (function () {
 			runAnimation();
 			window.addEventListener('resize', function() {
 				runAnimation();
+			});
+			window.addEventListener('click', function() {
+				alert("average frame rate is currently: "+Performance.getAvgFrameRate());
 			});
 		}
 
