@@ -97,7 +97,6 @@ var Cohesion = (function () {
 
 
 		function update(){
-			Performance.incrementMeasure();
 		    var len = points.length;
 		    drawingContext.clearRect( 0, 0, animationCanvas.width, animationCanvas.height );
 		    // draw background and top and bottom edges first
@@ -145,7 +144,6 @@ var Cohesion = (function () {
 
 		document.getElementById('cohesion').appendChild(animationCanvas);
 		clearTimeout(animationTimeout);
-		Performance.startMeasure();
 		update(); 
 
 	}
@@ -166,9 +164,6 @@ var Cohesion = (function () {
 			runAnimation();
 			window.addEventListener('resize', function() {
 				runAnimation();
-			});
-			window.addEventListener('click', function() {
-				alert("average frame rate is currently: "+Performance.getAvgFrameRate());
 			});
 		}
 
