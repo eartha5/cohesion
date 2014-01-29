@@ -9,11 +9,10 @@ var Cohesion = (function () {
 			width: 				window.innerWidth,
 			height: 			window.innerHeight,
 			containerId: 		'cohesion',
-			speedMultiplier: 	.2,
 			lightRgb: 			[255,255,255],
 			darkRgb: 			[0,0,50],
 			blobCount: 			20,
-			frameRate: 			24
+			frameRate: 			18
 		}
 
 		blobber = new Blobber( options );

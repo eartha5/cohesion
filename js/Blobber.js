@@ -45,8 +45,12 @@ var Blobber = function( options ) {
     	backgroundColor = 'rgb(0,0,0)',
     	lightColorStop = 'rgba(255,0,0,1)',
     	darkColorStop = 'rgba(100,0,0,0)',
-    	sizeBase = 40,
-    	sizeMultiplier = 120;
+    	sizeBaseFactor = .05,
+    	sizeMultiplierFactor = .14,
+    	sizeBase,
+    	sizeMultiplier,
+    	sideMarginPercent = 15,
+    	maxPixelsPerSecond = 30;
 
     // non-behavioral
 	var animationId,
@@ -69,6 +73,8 @@ var Blobber = function( options ) {
 
     var init = function() {
 
+    	setSizeVars();
+
 		createCanvases();
 		preDrawPersistentPixels();
 
@@ -76,16 +82,23 @@ var Blobber = function( options ) {
 
 		startAnimation();
 
+		console.log("w: "+w+", h: "+h);
+
+    };
+
+    var setSizeVars = function() {
+    	sizeBase = sizeBaseFactor * w,
+    	sizeMultiplier = sizeMultiplierFactor * w;
     };
 
     var createPoints = function() {
     	points = [];
-    	var maxPixelsPerSecond = 50;
 		for(var i = 0; i < blobCount; i++){
-		    var x = animationCanvas.width / blobCount * i,
+		    var x = (animationCanvas.width * sideMarginPercent / 100 ) + 
+		    			(animationCanvas.width * ( ( 100 - sideMarginPercent * 2 ) / 100 ) ) * Math.random(),
 		        y = Math.random() * animationCanvas.height,
 		        vx = 0,
-		        vy = ( ( Math.random() * maxPixelsPerSecond ) - (.5 * maxPixelsPerSecond) ), 
+		        vy = ( ( Math.random() * maxPixelsPerSecond ) - (.5 * maxPixelsPerSecond) + 5 ), 
 		        size = Math.floor( Math.random() * sizeMultiplier ) + sizeBase;
 		    
 		    points.push({ x:x, y:y, vx:vx, vy:vy, size:size });
