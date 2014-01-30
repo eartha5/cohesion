@@ -12,7 +12,7 @@ var Cohesion = (function () {
 			lightRgb: 			[255,255,255],
 			darkRgb: 			[0,0,50],
 			blobCount: 			20,
-			frameRate: 			60
+			frameRate: 			100
 		}
 
 		blobber = new Blobber( options );

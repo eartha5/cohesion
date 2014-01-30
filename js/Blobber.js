@@ -171,26 +171,40 @@ var Blobber = function( options ) {
     };
 
     var startAnimation = function() {
-    	window.cancelAnimationFrame(animationId);
-//    	if (typeof pointPositionWorker === Worker)
-    	if (pointPositionWorker)
-    		pointPositionWorker.postMessage(
-    			{
-    				cmd: "stop"
-    			}
-    		);
-    	pointPositionWorker = new Worker("js/workers/pointPositionWorker.js");
-    	pointPositionWorker.addEventListener('message', pointsWorkerHandler);
-    	pointPositionWorker.postMessage(
+
+    	// set up the filterWorker
+    	filterWorker = new Worker("js/workers/filterWorker.js");
+    	filterWorker.addEventListener('message', filterReturnHandler);
+	   	filterWorker.postMessage(
     		{
-				cmd : "start",
-				points : points, 
-				canvasDims : {
-					width: animationCanvas.width,
-					height: animationCanvas.height
-				} 
+				cmd : "init",
+				overlapThreshold: overlapThreshold,
+				lightDisplayRgb: lightDisplayRgb,
+				darkDisplayRgb: darkDisplayRgb
 			}
     	);
+
+
+    	window.cancelAnimationFrame(animationId);
+//    	if (typeof pointPositionWorker === Worker)
+   //  	if (pointPositionWorker)
+   //  		pointPositionWorker.postMessage(
+   //  			{
+   //  				cmd: "stop"
+   //  			}
+   //  		);
+   //  	pointPositionWorker = new Worker("js/workers/pointPositionWorker.js");
+   //  	pointPositionWorker.addEventListener('message', pointsWorkerHandler);
+   //  	pointPositionWorker.postMessage(
+   //  		{
+			// 	cmd : "start",
+			// 	points : points, 
+			// 	canvasDims : {
+			// 		width: animationCanvas.width,
+			// 		height: animationCanvas.height
+			// 	} 
+			// }
+   //  	);
     	runOneFrame();
     };
 
@@ -200,51 +214,51 @@ var Blobber = function( options ) {
 
 	// ALL THIS NOW DONE IN pointPositionWorker.js
 		// check time passed since last frame
-		// var animationTimeNow = Date.now();
-		// var dTime = animationTimeNow - animationTimeStamp;
+		var animationTimeNow = Date.now();
+		var dTime = animationTimeNow - animationTimeStamp;
 
-		// // this conditional limits resource consumption by limiting rendering to only those frames
-		// // that need draw in order to achieve our target frameRate  (those frames that happen just over the frameRate threshold)
-		// if (dTime > 1000 / frameRate) {
-		// 	animationTimeStamp = animationTimeNow;
-		// 	update(dTime);
-		// }
+		// this conditional limits resource consumption by limiting rendering to only those frames
+		// that need draw in order to achieve our target frameRate  (those frames that happen just over the frameRate threshold)
+		if (dTime > 1000 / frameRate) {
+			animationTimeStamp = animationTimeNow;
+			update(dTime);
+		}
 
 		// poll the pointsPositionWorker to get points now
-		pointPositionWorker.postMessage({
-			cmd : "poll"
-		});
+		// pointPositionWorker.postMessage({
+		// 	cmd : "poll"
+		// });
 
 	};
 
-	var pointsWorkerHandler = function(e) {
-		points = e.data.points;
-		if (e.data.status == "polled")
-			update();
-	};
+	// var pointsWorkerHandler = function(e) {
+	// 	points = e.data.points;
+	// 	if (e.data.status == "polled")
+	// 		update();
+	// };
 
 
-	var update = function(){
+	var update = function(dTime){
 
 	    var len = points.length;
 	    drawingContext.putImageData(preDrawContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height ), 0, 0);
 
 		// HANDLED IN pointPositionWorker.js NOW
-	    // while( len-- ){
-	    //     var point = points[ len ];
-	    //     point.y += point.vy * dTime / 1000;
+	    while( len-- ){
+	        var point = points[ len ];
+	        point.y += point.vy * dTime / 1000;
 	        
-	    //     if(point.y > animationCanvas.height + point.size){
-	    //         point.y = 0 - point.size;
-	    //     }
-	    //     if(point.y < 0 - point.size){
-	    //         point.y = animationCanvas.height + point.size;
-	    //    }
+	        if(point.y > animationCanvas.height + point.size){
+	            point.y = 0 - point.size;
+	        }
+	        if(point.y < 0 - point.size){
+	            point.y = animationCanvas.height + point.size;
+	       }
 	        
 	       	// dependencies:  points, drawingContext, lightColorStop, DarkColorStop,
 
-	    while( len-- ){
-	        var point = points[ len ];
+	    // while( len-- ){
+	    //     var point = points[ len ];
 
 	        drawingContext.beginPath();
 	        var pointGradient = drawingContext.createRadialGradient( point.x, point.y, 1, point.x, point.y, point.size );
@@ -262,23 +276,22 @@ var Blobber = function( options ) {
 	    var imageData = drawingContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
 
 		// var filteredData = Filters.filterImage(Filters.twoColorThreshold, imageData, overlapThreshold, lightDisplayRgb, darkDisplayRgb);
-    	filterWorker = new Worker("js/workers/filterWorker.js");
-    	filterWorker.addEventListener('message', filterReturnHandler);
+		// animationContext.putImageData(filteredData, 0, 0);
+
     	filterWorker.postMessage(
     		{
 				cmd : "runFilter",
-				imageData: imageData, 
-				ovelapThreshold: overlapThreshold,
-				lightDisplayRgb: lightDisplayRgb,
-				darkDisplayRgb: darkDisplayRgb,
-				Filters: Filters
+				imageData: imageData
 			}
     	);
 
 	};
 
 	var filterReturnHandler = function(e) {
-		animationContext.putImageData(e.data.imageData, 0, 0);
+		if (e.data.status == 'filtered') {
+			animationContext.putImageData(e.data.imageData, 0, 0);
+			console.log("filtered received");
+		}
 	}
 
 
