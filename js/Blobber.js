@@ -64,7 +64,6 @@ var Blobber = function( options ) {
 		points = [];
 
 	// web workers
-	var pointPositionWorker;
 	var filterWorker;
 
 
@@ -91,7 +90,7 @@ var Blobber = function( options ) {
     };
 
     var setSizeVars = function() {
-    	sizeBase = sizeBaseFactor * w,
+    	sizeBase = sizeBaseFactor * w;
     	sizeMultiplier = sizeMultiplierFactor * w;
     };
 
@@ -186,25 +185,7 @@ var Blobber = function( options ) {
 
 
     	window.cancelAnimationFrame(animationId);
-//    	if (typeof pointPositionWorker === Worker)
-   //  	if (pointPositionWorker)
-   //  		pointPositionWorker.postMessage(
-   //  			{
-   //  				cmd: "stop"
-   //  			}
-   //  		);
-   //  	pointPositionWorker = new Worker("js/workers/pointPositionWorker.js");
-   //  	pointPositionWorker.addEventListener('message', pointsWorkerHandler);
-   //  	pointPositionWorker.postMessage(
-   //  		{
-			// 	cmd : "start",
-			// 	points : points, 
-			// 	canvasDims : {
-			// 		width: animationCanvas.width,
-			// 		height: animationCanvas.height
-			// 	} 
-			// }
-   //  	);
+
     	runOneFrame();
     };
 
@@ -212,7 +193,6 @@ var Blobber = function( options ) {
 		animationId = window.requestAnimationFrame(runOneFrame);
 
 
-	// ALL THIS NOW DONE IN pointPositionWorker.js
 		// check time passed since last frame
 		var animationTimeNow = Date.now();
 		var dTime = animationTimeNow - animationTimeStamp;
@@ -224,18 +204,7 @@ var Blobber = function( options ) {
 			update(dTime);
 		}
 
-		// poll the pointsPositionWorker to get points now
-		// pointPositionWorker.postMessage({
-		// 	cmd : "poll"
-		// });
-
 	};
-
-	// var pointsWorkerHandler = function(e) {
-	// 	points = e.data.points;
-	// 	if (e.data.status == "polled")
-	// 		update();
-	// };
 
 
 	var update = function(dTime){
@@ -243,7 +212,6 @@ var Blobber = function( options ) {
 	    var len = points.length;
 	    drawingContext.putImageData(preDrawContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height ), 0, 0);
 
-		// HANDLED IN pointPositionWorker.js NOW
 	    while( len-- ){
 	        var point = points[ len ];
 	        point.y += point.vy * dTime / 1000;
@@ -254,11 +222,7 @@ var Blobber = function( options ) {
 	        if(point.y < 0 - point.size){
 	            point.y = animationCanvas.height + point.size;
 	       }
-	        
-	       	// dependencies:  points, drawingContext, lightColorStop, DarkColorStop,
 
-	    // while( len-- ){
-	    //     var point = points[ len ];
 
 	        drawingContext.beginPath();
 	        var pointGradient = drawingContext.createRadialGradient( point.x, point.y, 1, point.x, point.y, point.size );
@@ -274,9 +238,6 @@ var Blobber = function( options ) {
 
 	var renderFiltered = function(){
 	    var imageData = drawingContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
-
-		// var filteredData = Filters.filterImage(Filters.twoColorThreshold, imageData, overlapThreshold, lightDisplayRgb, darkDisplayRgb);
-		// animationContext.putImageData(filteredData, 0, 0);
 
     	filterWorker.postMessage(
     		{
