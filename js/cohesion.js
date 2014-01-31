@@ -36,7 +36,7 @@ var Cohesion = (function () {
 				animationStartTimer = setTimeout( function() {
 					resizeBlobber( window.innerWidth, window.innerHeight );
 				}, 100 );
-
+			});
 		}
 
 	}
