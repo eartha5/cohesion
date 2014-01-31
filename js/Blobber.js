@@ -28,6 +28,21 @@
  *
  */
 
+var FilterJobTracker = function( count ) {
+
+	var currentCount = 0;
+
+	this.trackFilterFinished = function() {
+		if (currentCount == count - 1) {
+			currentCount = 0;
+			return true;
+		}
+		currentCount++;
+		return false;
+	};
+
+};
+
 
 var Blobber = function( options ) {
 
@@ -45,8 +60,8 @@ var Blobber = function( options ) {
     	backgroundColor = 'rgb(0,0,0)',
     	lightColorStop = 'rgba(255,0,0,1)',
     	darkColorStop = 'rgba(100,0,0,0)',
-    	sizeBaseFactor = .05,
-    	sizeMultiplierFactor = .14,
+    	sizeBaseFactor = 0.05,
+    	sizeMultiplierFactor = 0.14,
     	sizeBase,
     	sizeMultiplier,
     	sideMarginPercent = 15,
@@ -64,8 +79,13 @@ var Blobber = function( options ) {
 		points = [];
 
 	// web workers
-	var pointPositionWorker;
-	var filterWorker;
+	var evenNumberOfFilterWorkers = 8;
+	var filterWorkers = [];
+	var filterJobTracker;
+
+	// canvas image data composite
+	var imageCompositeData;
+	var imageCompositeDivisionSize;
 
 
     this.resize = function(newW, newH) {
@@ -102,12 +122,12 @@ var Blobber = function( options ) {
 		    			(animationCanvas.width * ( ( 100 - sideMarginPercent * 2 ) / 100 ) ) * Math.random(),
 		        y = Math.random() * animationCanvas.height,
 		        vx = 0,
-		        vy = ( ( Math.random() * maxPixelsPerSecond ) - (.5 * maxPixelsPerSecond) + 5 ), 
+		        vy = ( ( Math.random() * maxPixelsPerSecond ) - (0.5 * maxPixelsPerSecond) + 5 ), 
 		        size = Math.floor( Math.random() * sizeMultiplier ) + sizeBase;
 		    
 		    points.push({ x:x, y:y, vx:vx, vy:vy, size:size });
 		                       
-		};
+		}
     };
 
     var createCanvases = function() {
@@ -172,47 +192,27 @@ var Blobber = function( options ) {
 
     var startAnimation = function() {
 
-    	// set up the filterWorker
-    	filterWorker = new Worker("js/workers/filterWorker.js");
-    	filterWorker.addEventListener('message', filterReturnHandler);
-	   	filterWorker.postMessage(
-    		{
-				cmd : "init",
-				overlapThreshold: overlapThreshold,
-				lightDisplayRgb: lightDisplayRgb,
-				darkDisplayRgb: darkDisplayRgb
-			}
-    	);
-
+    	// set up the filterWorkers
+    	for (var i=0; i < evenNumberOfFilterWorkers; i++) {
+	    	filterWorkers.push( new Worker("js/workers/filterWorker.js") );
+	    	filterWorkers[i].addEventListener('message', filterReturnHandler);
+		   	filterWorkers[i].postMessage(
+	    		{
+					cmd : "init",
+					id: i,
+					overlapThreshold: overlapThreshold,
+					lightDisplayRgb: lightDisplayRgb,
+					darkDisplayRgb: darkDisplayRgb
+				}
+	    	);
+		}
 
     	window.cancelAnimationFrame(animationId);
-//    	if (typeof pointPositionWorker === Worker)
-   //  	if (pointPositionWorker)
-   //  		pointPositionWorker.postMessage(
-   //  			{
-   //  				cmd: "stop"
-   //  			}
-   //  		);
-   //  	pointPositionWorker = new Worker("js/workers/pointPositionWorker.js");
-   //  	pointPositionWorker.addEventListener('message', pointsWorkerHandler);
-   //  	pointPositionWorker.postMessage(
-   //  		{
-			// 	cmd : "start",
-			// 	points : points, 
-			// 	canvasDims : {
-			// 		width: animationCanvas.width,
-			// 		height: animationCanvas.height
-			// 	} 
-			// }
-   //  	);
     	runOneFrame();
     };
 
     var runOneFrame = function() {
-		animationId = window.requestAnimationFrame(runOneFrame);
 
-
-	// ALL THIS NOW DONE IN pointPositionWorker.js
 		// check time passed since last frame
 		var animationTimeNow = Date.now();
 		var dTime = animationTimeNow - animationTimeStamp;
@@ -223,19 +223,12 @@ var Blobber = function( options ) {
 			animationTimeStamp = animationTimeNow;
 			update(dTime);
 		}
-
-		// poll the pointsPositionWorker to get points now
-		// pointPositionWorker.postMessage({
-		// 	cmd : "poll"
-		// });
+		else {
+			animationId = window.requestAnimationFrame(runOneFrame);
+		}
 
 	};
 
-	// var pointsWorkerHandler = function(e) {
-	// 	points = e.data.points;
-	// 	if (e.data.status == "polled")
-	// 		update();
-	// };
 
 
 	var update = function(dTime){
@@ -243,7 +236,7 @@ var Blobber = function( options ) {
 	    var len = points.length;
 	    drawingContext.putImageData(preDrawContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height ), 0, 0);
 
-		// HANDLED IN pointPositionWorker.js NOW
+
 	    while( len-- ){
 	        var point = points[ len ];
 	        point.y += point.vy * dTime / 1000;
@@ -255,10 +248,6 @@ var Blobber = function( options ) {
 	            point.y = animationCanvas.height + point.size;
 	       }
 	        
-	       	// dependencies:  points, drawingContext, lightColorStop, DarkColorStop,
-
-	    // while( len-- ){
-	    //     var point = points[ len ];
 
 	        drawingContext.beginPath();
 	        var pointGradient = drawingContext.createRadialGradient( point.x, point.y, 1, point.x, point.y, point.size );
@@ -273,26 +262,96 @@ var Blobber = function( options ) {
 	};
 
 	var renderFiltered = function(){
-	    var imageData = drawingContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
 
-		// var filteredData = Filters.filterImage(Filters.twoColorThreshold, imageData, overlapThreshold, lightDisplayRgb, darkDisplayRgb);
-		// animationContext.putImageData(filteredData, 0, 0);
+	    // start FilterJobTracker
+	    filterJobTracker = new FilterJobTracker(evenNumberOfFilterWorkers);
 
-    	filterWorker.postMessage(
-    		{
-				cmd : "runFilter",
-				imageData: imageData
+		for (var i=0; i < evenNumberOfFilterWorkers; i++) {
+
+			var imageData;
+			switch (i) {
+				case 0:
+					imageData = drawingContext.getImageData( 0, 0, animationCanvas.width / 4, animationCanvas.height / 2);
+					break;
+				case 1:
+					imageData = drawingContext.getImageData( animationCanvas.width / 4, 0, animationCanvas.width / 2, animationCanvas.height / 2);
+					break;
+				case 2:
+					imageData = drawingContext.getImageData( animationCanvas.width / 2, 0, animationCanvas.width * .75, animationCanvas.height / 2);
+					break;
+				case 3:
+					imageData = drawingContext.getImageData( animationCanvas.width * .75, 0, animationCanvas.width, animationCanvas.height / 2);
+					break;										
+				case 4:
+					imageData = drawingContext.getImageData( 0, animationCanvas.height / 2, animationCanvas.width / 4, animationCanvas.height);
+					break;
+				case 5:
+					imageData = drawingContext.getImageData( animationCanvas.width / 4, animationCanvas.height / 2, animationCanvas.width / 2, animationCanvas.height);
+					break;
+				case 6:
+					imageData = drawingContext.getImageData( animationCanvas.width / 2, animationCanvas.height / 2, animationCanvas.width * .75, animationCanvas.height);
+					break;
+				case 7:
+					imageData = drawingContext.getImageData( animationCanvas.width * .75, animationCanvas.height / 2, animationCanvas.width, animationCanvas.height);
+					break;										
 			}
-    	);
 
+	    	filterWorkers[i].postMessage(
+	    		{
+					cmd : "runFilter",
+					id : i,
+					imageData: imageData
+				}
+	    	);
+	    }
+
+	};
+
+	var reconstructCompositeImage = function(e) {
+		// write the quadrant back to image
+		switch (e.data.id) {
+			case 0:
+				drawingContext.putImageData( e.data.imageData, 0, 0);
+				break;
+			case 1:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width / 4, 0);
+				break;
+			case 2:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width / 2, 0);
+				break;
+			case 3:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width * .75, 0);
+				break;										
+			case 4:
+				drawingContext.putImageData( e.data.imageData, 0, animationCanvas.height / 2);
+				break;
+			case 5:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width / 4, animationCanvas.height / 2);
+				break;
+			case 6:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width / 2, animationCanvas.height / 2);
+				break;
+			case 7:
+				drawingContext.putImageData( e.data.imageData, animationCanvas.width * .75, animationCanvas.height / 2);
+				break;										
+		}
+
+		if ( filterJobTracker.trackFilterFinished() ) {
+			renderCompositeImage();
+		}
+	};
+
+	var renderCompositeImage = function() {
+		animationId = window.requestAnimationFrame(runOneFrame);
+		var imageData = drawingContext.getImageData( 0, 0, animationCanvas.width, animationCanvas.height );
+		animationContext.putImageData(imageData, 0, 0);
 	};
 
 	var filterReturnHandler = function(e) {
 		if (e.data.status == 'filtered') {
-			animationContext.putImageData(e.data.imageData, 0, 0);
-			console.log("filtered received");
+			reconstructCompositeImage(e);
 		}
-	}
+	};
 
 
 	init();

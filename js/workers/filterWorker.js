@@ -1,12 +1,12 @@
 // Filter worker
 
-// once started, runs continuously every 10ms, and is polled to read points array
 
 /*
 	Input:
 
 	e.data = {
-		cmd: 'runFilter' [,
+		cmd: 'runFilter',
+		id: int [,
 		imageData: [rint,gint,bint,aint,...], 
 		ovelapThreshold: int ,
 		lightDisplayRgb: [rint,gint,bint],
@@ -20,6 +20,9 @@
 
 // };
 
+
+
+// multi-worker compatability
 
 var Filters = (function() {
 
@@ -43,7 +46,6 @@ var Filters = (function() {
 		        imageData.data[i+2] = displayRgbArray[2];
 		    }
 		    return imageData;
-	    
 		}
 
 	};
@@ -51,7 +53,8 @@ var Filters = (function() {
 })();
 
 
-var imageDataIn,
+var id,
+	imageDataIn,
 	imageDataOut,
 	overlapThreshold,
 	lightDisplayRgb,
@@ -65,6 +68,7 @@ var returnFiltered = function() {
     self.postMessage(
         {	
         	status: 'filtered',
+        	id: id, 
         	imageData: imageDataOut
         }
     );
@@ -73,6 +77,7 @@ var returnFiltered = function() {
 self.addEventListener('message', function(e) {
 	switch (e.data.cmd) {
 		case 'init':
+			id = e.data.id;
 	        overlapThreshold = e.data.overlapThreshold;
 	        lightDisplayRgb = e.data.lightDisplayRgb;
 	        darkDisplayRgb = e.data.darkDisplayRgb;
